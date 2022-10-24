@@ -134,6 +134,13 @@ void Command::execute() {
   // Setup i/o redirection
   // and call exec
 
+  /* char* cmd = _simpleCommands[0]->_arguments[0]; */
+
+  /* if (!strcmp(cmd, "exit")) { */
+  /*   printf("Exiting\n"); */
+  /*   exit(1); */
+  /* } */
+
   // Clear to prepare for next command
   clear();
 
@@ -144,7 +151,7 @@ void Command::execute() {
 // Shell implementation
 
 void Command::prompt() {
-  printf("myshell>");
+  printf("myshell> ");
   fflush(stdout);
 }
 
