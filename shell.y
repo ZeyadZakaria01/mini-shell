@@ -13,17 +13,17 @@
 
 %token	<string_val> WORD
 
-%token 	NOTOKEN GREAT NEWLINE 
+%token 	NOTOKEN GREAT NEWLINE GGREAT LESS LLESS PIPE AMPERSAND GREATAMPERCAND;
 
 %union	{
 		char   *string_val;
-	}
+        }
 
 %{
 extern "C" 
 {
 	int yylex();
-	void yyerror (char const *s);
+	void jyerror (char const *s);
 }
 #define yylex yylex
 #include <stdio.h>
@@ -37,15 +37,17 @@ goal:
 	;
 
 commands: 
-	command
-	| commands command 
+    command
+	|commands command 
 	;
 
-command: simple_command
+command: 
+       simple_command
+       |
         ;
 
 simple_command:	
-	command_and_args iomodifier_opt NEWLINE {
+	pipe_list iomodifier_list background_opt NEWLINE {
 		printf("   Yacc: Execute command\n");
 		Command::_currentCommand.execute();
 	}
@@ -67,9 +69,8 @@ arg_list:
 
 argument:
 	WORD {
-               printf("   Yacc: insert argument \"%s\"\n", $1);
-
-	       Command::_currentSimpleCommand->insertArgument( $1 );\
+            printf("   Yacc: insert argument \"%s\"\n", $1);
+            Command::_currentSimpleCommand->insertArgument( $1 );
 	}
 	;
 
@@ -87,8 +88,50 @@ iomodifier_opt:
 		printf("   Yacc: insert output \"%s\"\n", $2);
 		Command::_currentCommand._outFile = $2;
 	}
-	| /* can be empty */ 
+	| GGREAT WORD {
+        if( Command::_currentCommand._outFile) {
+            printf("Already set to another location GGREAT shell.y");
+            exit(0);
+        }
+
+        printf("out file with append \%s\" \n", $2);
+        Command::_currentCommand._outFile = $2;
+        Command::_currentCommand._append= 1;
+    }
+    | GREATAMPERCAND WORD {
+            if( Command::_currentCommand._outFile) {
+                printf("Already set to another location GGREATAMPERCAND shell.y");
+                exit(0);
+            }
+            printf("GREATAMPERCAND shell.y");
+            Command::_currentCommand._outFile = $2;
+            Command::_currentCommand._background = 1;
+    }        
+    | LESS WORD {
+		printf("   Yacc: insert input\"%s\"\n", $2);
+		Command::_currentCommand._inputFile= $2;
+	}
 	;
+
+iomodifier_list:
+    iomodifier_list iomodifier_opt // it can stack on each others
+    | iomodifier_opt
+    | // Can be empty
+    ;
+
+pipe_list:
+    pipe_list PIPE command_and_args
+    | command_and_args
+    /* can not be empty */
+    ;
+
+background_opt:
+    AMPERSAND {
+        printf("made command run in background");
+        Command::_currentCommand._background = 1;
+    }
+    | /* user wants to run in foreground */
+    ;
 
 %%
 

@@ -1,4 +1,3 @@
-
 /*
  *
  * CS-413 Spring 98
@@ -11,33 +10,49 @@
 
 #include <string.h>
 #include "y.tab.h"
-
 %}
-
 %%
 
 \n 	{
-		return NEWLINE;
-	}
+    return NEWLINE;
+}
 
 [ \t] 	{
-		/* Discard spaces and tabs */
-     	}	
+    /* Discard spaces and tabs */
+}	
 
 ">" 	{
-		return GREAT;
-	}
+    return GREAT;
+}
+">>" 	{
+    return GGREAT;
+}
 
-[^ \t\n][^ \t\n]*  {
-		/* Assume that file names have only alpha chars */
-		yylval.string_val = strdup(yytext);
-		return WORD;
-	}
+"<" 	{
+    return LESS;
+}
+
+"|"     {
+    return PIPE;
+}
+
+"&"     {
+    return AMPERSAND;
+}
+
+">&"    {
+    return GREATAMPERCAND;
+}
 
 .	{
-		/* Invalid character in input */
-		return NOTOKEN;
-	}
+    return NOTOKEN;
+}
 
+
+[^ \t\n][^ \t\n]*  {
+    /* Assume that file names have only alpha chars */
+    yylval.string_val = strdup(yytext);
+    return WORD;
+}
 %%
-	
+

@@ -16,7 +16,7 @@ y.tab.o: shell.y
 command.o: command.cc
 	$(CC) -c command.cc
 
-shell: y.tab.o lex.yy.o command.o
+shell: clean y.tab.o lex.yy.o command.o
 	$(CC) -o shell lex.yy.o y.tab.o command.o -ll
 
 clean:

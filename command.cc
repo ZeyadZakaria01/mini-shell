@@ -20,7 +20,7 @@
 #include "command.h"
 
 SimpleCommand::SimpleCommand() {
-  // Creat available space for 5 arguments
+  // Create available space for 5 arguments
   _numberOfAvailableArguments = 5;
   _numberOfArguments = 0;
   _arguments = (char **)malloc(_numberOfAvailableArguments * sizeof(char *));
@@ -53,6 +53,7 @@ Command::Command() {
   _inputFile = 0;
   _errFile = 0;
   _background = 0;
+  _append = 0;
 }
 
 void Command::insertSimpleCommand(SimpleCommand *simpleCommand) {
