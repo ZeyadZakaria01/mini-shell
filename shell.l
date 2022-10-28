@@ -44,6 +44,10 @@
     return GREATAMPERCAND;
 }
 
+">>&"    {
+    return GGREATAMPERCAND;
+}
+
 .	{
     return NOTOKEN;
 }

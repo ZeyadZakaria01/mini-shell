@@ -100,13 +100,21 @@ iomodifier_opt:
     }
     | GREATAMPERCAND WORD {
             if( Command::_currentCommand._outFile) {
-                printf("Already set to another location GGREATAMPERCAND shell.y");
+                printf("Already set to another location GREATAMPERCAND shell.y");
                 exit(0);
             }
-            printf("GREATAMPERCAND shell.y");
             Command::_currentCommand._outFile = $2;
             Command::_currentCommand._background = 1;
     }        
+    | GGREATAMPERCAND WORD {
+            if( Command::_currentCommand._outFile) {
+                printf("Already set to another location GGREATAMPERCAND shell.y");
+                exit(0);
+            }
+            Command::_currentCommand._outFile = $2;
+            Command::_currentCommand._background = 1;
+            Command::_currentCommand._append = 1;
+    }
     | LESS WORD {
 		printf("   Yacc: insert input\"%s\"\n", $2);
 		Command::_currentCommand._inputFile= $2;
