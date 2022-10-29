@@ -23,7 +23,7 @@
 extern "C" 
 {
 	int yylex();
-	void jyerror (char const *s);
+	void yyerror (char const *s);
 }
 #define yylex yylex
 #include <stdio.h>
