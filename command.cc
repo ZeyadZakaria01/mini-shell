@@ -9,6 +9,8 @@
  */
 
 #include <bits/posix_opt.h>
+#include <bits/stdc++.h>
+#include <cstddef>
 #include <cstdlib>
 #include <fcntl.h>
 #include <signal.h>
@@ -21,6 +23,9 @@
 #include <unistd.h>
 
 #include "command.h"
+using namespace std;
+
+string absolute = ".";
 
 SimpleCommand::SimpleCommand() {
   // Create available space for 5 arguments
@@ -129,8 +134,38 @@ void Command::execute() {
     prompt();
     return;
   }
+  char cwd[1000];
+  if (chdir(absolute.c_str()) != 0) {
+    printf("error in chdir");
+  } else {
+    if (getcwd(cwd, sizeof(cwd)) == NULL) {
+      printf("error in getting cwd");
+    } else {
+      cout << cwd;
+    }
+  }
 
   // Print contents of Command data structure
+  // TODO: sometimes exit is bugged 
+  if (!strcmp(_simpleCommands[0]->_arguments[0], "exit")) {
+    printf("\t\tGood bye!\n");
+    exit(0);
+  }
+  if (!strcmp(_simpleCommands[0]->_arguments[0], "cd")) {
+    absolute = _simpleCommands[0]->_arguments[1];
+
+    cout << "Changed directory to " << absolute << endl;
+    if (chdir(absolute.c_str()) != 0) {
+      printf("error in chdir");
+    } else {
+      if (getcwd(cwd, sizeof(cwd)) == NULL) {
+        printf("error in getting cwd");
+      } else {
+        cout << cwd;
+        absolute = cwd;
+      }
+    }
+  }
   print();
 
   pid_t pid;
@@ -234,18 +269,27 @@ void Command::execute() {
 
 // Shell implementation
 
+Command Command::_currentCommand;
+SimpleCommand *Command::_currentSimpleCommand;
+
 void Command::prompt() {
   printf("myshell> ");
   fflush(stdout);
 }
-
-Command Command::_currentCommand;
-SimpleCommand *Command::_currentSimpleCommand;
+void sigintHandler(int sig_num) {
+  /* Reset handler to catch SIGINT next time.
+  Refer http://en.cppreference.com/w/c/program/signal */
+  printf("\n");
+  Command::_currentCommand.prompt();
+  signal(SIGINT, sigintHandler);
+  /* Command::_currentCommand.clear(); */
+}
 
 int yyparse(void);
 
 int main() {
   Command::_currentCommand.prompt();
+  signal(SIGINT, sigintHandler);
   yyparse();
   return 0;
 }
