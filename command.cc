@@ -1,4 +1,3 @@
-
 /*
  * CS354: Shell project
  *
@@ -153,12 +152,17 @@ void Command::execute() {
     // makes outdf file descriptor = 0
     fdin = dup2(fdin, STDIN_FILENO);
   }
+  if (_outFile) {
+    outfd = creat(_outFile, 0600);
+    if (outfd < 0) {
+      printf("Could not create file");
+      exit(1);
+    }
+    // makes outdf file descriptor = 1
+    /* dup2(outfd,2); */
+    outfd = dup2(outfd, STDOUT_FILENO);
+  } 
 
-  int fdpipe[2];
-  if (pipe(fdpipe) == -1) {
-    perror("cat_grep: pipe");
-    exit(EXIT_FAILURE);
-  }
   /* dup2(defaultin, 0); */
 
   // Redirect output to pipe (write the output to pipefile[1] instead od
@@ -166,9 +170,6 @@ void Command::execute() {
 
   // Redirect err (use stderr)
   for (int i = 0; i < _numberOfSimpleCommands - 1; i++) {
-    dup2(fdpipe[0], 0);
-    dup2(fdpipe[1], 1);
-    dup2(defaulterr, 2);
 
     SimpleCommand *cmd = _simpleCommands[i];
     pid = fork();
@@ -184,55 +185,14 @@ void Command::execute() {
       }
     }
   }
-  close(fdpipe[0]);
-  close(fdpipe[1]);
-  if (_outFile) {
-    outfd = creat(_outFile, 0600);
-    if (outfd < 0) {
-      printf("Could not create file");
-      exit(1);
-    }
-    // makes outdf file descriptor = 1
-    /* dup2(outfd,2); */
-    outfd = dup2(outfd, STDOUT_FILENO);
-  } else {
-    dup2(defaultout, STDOUT_FILENO);
-  }
-  /* if (_inputFile) { */
-  /*   /1* fdin = creat(_inputFile, 0664); *1/ */
-  /*   fdin = open(_inputFile, O_RDONLY); */
-  /*   if (fdin < 0) { */
-  /*     printf("Could not create file"); */
-  /*     exit(1); */
-  /*   } */
-  /* } else if (_numberOfSimpleCommands > 1) { */
-  /*   // makes outdf file descriptor = 0 */
-  /*   fdin = dup2(fdin, fdpipe[1]); */
-  /* } else { */
-  /*   dup2(defaultin, STDIN_FILENO); */
-  /* } */
-
-  SimpleCommand *cmd = _simpleCommands[_numberOfAvailableSimpleCommands - 1];
-
-  pid = fork();
-  if (pid == -1) {
-    printf("failed at %s\n", cmd->_arguments[0]);
-    exit(EXIT_FAILURE);
-  }
-  if (pid == 0) { // child
-    execvp(cmd->_arguments[0], cmd->_arguments);
-  } else {
-    if (_background == 0) {
-      waitpid(pid, &status, 0);
-    }
-  }
 
   // restore output to the previous state
-  /* dup2(defaultout, STDOUT_FILENO); */
-  /* dup2(defaultin, STDIN_FILENO); */
-  /* dup2(defaulterr,STDERR_FILENO); */
-  close(fdin);
-  close(outfd);
+  dup2(defaultout, STDOUT_FILENO);
+  dup2(defaultin, STDIN_FILENO);
+  dup2(defaulterr,STDERR_FILENO);
+
+  /* close(fdin); */
+  /* close(outfd); */
 
   // Clear to prepare for next command
   clear();

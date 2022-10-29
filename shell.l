@@ -45,7 +45,7 @@
 }
 
 ">>&"    {
-    return GGREATAMPERCAND;
+    return GGREATAMPERCAND ;
 }
 
 .	{
