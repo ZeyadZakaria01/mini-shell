@@ -186,11 +186,21 @@ void Command::execute()
 		{
 			if (_outFile)
 			{
-				outfd = creat(_outFile, 0600);
-				if (outfd < 0)
+
+				// outfd = creat(_outFile, 0600);
+				if (_append)
 				{
-					printf("Could not create file");
-					exit(1);
+					outfd = open(_outFile, O_APPEND | O_RDWR, 0777);
+
+					/* failure */
+					if (outfd < 1)
+					{
+						outfd = open(_outFile, O_CREAT | O_RDWR, 0777);
+					}
+				}
+				else
+				{
+					outfd = creat(_outFile, 0777);
 				}
 				// makes outfd file descriptor = 1
 				dup2(outfd, 1);
