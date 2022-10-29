@@ -141,15 +141,17 @@ void Command::execute() {
     if (getcwd(cwd, sizeof(cwd)) == NULL) {
       printf("error in getting cwd");
     } else {
-      cout << cwd;
+      cout << "Current Directory is " << cwd << endl;
     }
   }
-
+  // TODO: exit sometimes bugs (when cd)
   // Print contents of Command data structure
-  // TODO: sometimes exit is bugged 
   if (!strcmp(_simpleCommands[0]->_arguments[0], "exit")) {
     printf("\t\tGood bye!\n");
-    exit(0);
+    clear();
+    // needs to be 1 as we need to indicate
+    // to indicate that the process didnt end in a peacful way
+    exit(1);
   }
   if (!strcmp(_simpleCommands[0]->_arguments[0], "cd")) {
     absolute = _simpleCommands[0]->_arguments[1];
@@ -161,12 +163,11 @@ void Command::execute() {
       if (getcwd(cwd, sizeof(cwd)) == NULL) {
         printf("error in getting cwd");
       } else {
-        cout << cwd;
+        cout << "Current Directory is " << cwd << endl;
         absolute = cwd;
       }
     }
   }
-  print();
 
   pid_t pid;
   int status;
@@ -273,7 +274,15 @@ Command Command::_currentCommand;
 SimpleCommand *Command::_currentSimpleCommand;
 
 void Command::prompt() {
-  printf("myshell> ");
+  char cwd[1000];
+  if (getcwd(cwd, sizeof(cwd)) == NULL) {
+    printf("error in getting cwd");
+  } else {
+    cout << "Current Directory is " << cwd << endl;
+    absolute = cwd;
+  }
+  /* printf("myshell> "); */
+  cout <<"[" << cwd << "]$ ";
   fflush(stdout);
 }
 void sigintHandler(int sig_num) {
