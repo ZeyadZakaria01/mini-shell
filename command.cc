@@ -140,47 +140,72 @@ void Command::execute() {
   int defaultout = dup(STDOUT_FILENO); // Default file Descriptor for stdout
   int defaulterr = dup(STDERR_FILENO); // Default file Descriptor for stderr
 
-  int fdin, outfd;
+  /* int fdin, outfd; */
 
-  if (_inputFile) {
-    fdin = open(_inputFile, O_RDONLY);
-    if (fdin < 0) {
-      printf("Could not create file");
-      exit(1);
-    }
-    // makes outdf file descriptor = 0
-    fdin = dup2(fdin, STDIN_FILENO);
-  }
-  if (_outFile) {
-    outfd = creat(_outFile, 0600);
-    if (outfd < 0) {
-      printf("Could not create file");
-      exit(1);
-    }
-    // makes outdf file descriptor = 1
-    /* dup2(outfd,2); */
-    outfd = dup2(outfd, STDOUT_FILENO);
-  }
+  /* if (_inputFile) { */
+  /*   fdin = open(_inputFile, O_RDONLY); */
+  /*   if (fdin < 0) { */
+  /*     printf("Could not create file"); */
+  /*     exit(1); */
+  /*   } */
+  /*   // makes outdf file descriptor = 0 */
+  /*   fdin = dup2(fdin, STDIN_FILENO); */
+  /* } */
+  /* if (_outFile) { */
+  /*   outfd = creat(_outFile, 0600); */
+  /*   if (outfd < 0) { */
+  /*     printf("Could not create file"); */
+  /*     exit(1); */
+  /*   } */
+  /*   // makes outdf file descriptor = 1 */
+  /*   /1* dup2(outfd,2); *1/ */
+  /*   outfd = dup2(outfd, STDOUT_FILENO); */
+  /* } */
 
   /* dup2(defaultin, 0); */
+  int fdpipes[_numberOfSimpleCommands][2];
+
+  for (int i = 0; i < _numberOfSimpleCommands; i++) {
+    if (pipe(fdpipes[i]) == -1) {
+      printf("Error is piping\n");
+    }
+  }
 
   // Redirect err (use stderr)
+  pid = fork();
   for (int i = 0; i < _numberOfSimpleCommands; i++) {
+    // if not last command
     SimpleCommand *cmd = _simpleCommands[i];
-    pid = fork();
     if (pid == -1) {
-      printf("failed at %s\n", cmd->_arguments[0]);
+      printf("could not fork");
       exit(EXIT_FAILURE);
     }
     if (pid == 0) { // child
+      if (_numberOfSimpleCommands - 1 != i) {
+        dup2(fdpipes[i][1], 1);
+      }
+      // if not first
+      if (i != 0) {
+        dup2(fdpipes[i - 1][0], 0);
+      }
+      for (int j = 0; j < _numberOfSimpleCommands; j++) {
+        if (j != i - 1)
+          close(fdpipes[j][1]);
+        if (j != i)
+          close(fdpipes[j][0]);
+      }
       execvp(cmd->_arguments[0], cmd->_arguments);
     } else {
       if (_background == 0) {
-        waitpid(pid, &status, 0);
+        waitpid(pid, 0, 0);
       }
     }
   }
 
+  for (int i = 0; i < _numberOfSimpleCommands; i++) {
+    close(fdpipes[i][0]);
+    close(fdpipes[i][1]);
+  }
   // restore output to the previous state
   dup2(defaultout, STDOUT_FILENO);
   dup2(defaultin, STDIN_FILENO);
@@ -188,6 +213,8 @@ void Command::execute() {
 
   /* close(fdin); */
   /* close(outfd); */
+  /* dup2(fdin, STDOUT_FILENO); */
+  /* dup2(outfd, STDIN_FILENO); */
 
   // Clear to prepare for next command
   clear();
