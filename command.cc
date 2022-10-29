@@ -143,7 +143,6 @@ void Command::execute() {
   int fdin, outfd;
 
   if (_inputFile) {
-    /* fdin = creat(_inputFile, 0664); */
     fdin = open(_inputFile, O_RDONLY);
     if (fdin < 0) {
       printf("Could not create file");
@@ -161,16 +160,12 @@ void Command::execute() {
     // makes outdf file descriptor = 1
     /* dup2(outfd,2); */
     outfd = dup2(outfd, STDOUT_FILENO);
-  } 
+  }
 
   /* dup2(defaultin, 0); */
 
-  // Redirect output to pipe (write the output to pipefile[1] instead od
-  // stdout)
-
   // Redirect err (use stderr)
-  for (int i = 0; i < _numberOfSimpleCommands - 1; i++) {
-
+  for (int i = 0; i < _numberOfSimpleCommands; i++) {
     SimpleCommand *cmd = _simpleCommands[i];
     pid = fork();
     if (pid == -1) {
@@ -189,7 +184,7 @@ void Command::execute() {
   // restore output to the previous state
   dup2(defaultout, STDOUT_FILENO);
   dup2(defaultin, STDIN_FILENO);
-  dup2(defaulterr,STDERR_FILENO);
+  dup2(defaulterr, STDERR_FILENO);
 
   /* close(fdin); */
   /* close(outfd); */
