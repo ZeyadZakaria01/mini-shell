@@ -171,37 +171,42 @@ void Command::execute() {
     }
   }
 
-  // Redirect err (use stderr)
-  pid = fork();
+
   for (int i = 0; i < _numberOfSimpleCommands; i++) {
-    // if not last command
+    // printf("i=%d",i);
     SimpleCommand *cmd = _simpleCommands[i];
+   
+    pid = fork();
     if (pid == -1) {
       printf("could not fork");
       exit(EXIT_FAILURE);
     }
     if (pid == 0) { // child
-      if (_numberOfSimpleCommands - 1 != i) {
-        dup2(fdpipes[i][1], 1);
-      }
-      // if not first
+     // if not first
+     // Input from previous output
+     printf(" my id is %d \n", getpid());
       if (i != 0) {
-        dup2(fdpipes[i - 1][0], 0);
+        if(dup2(fdpipes[i - 1][0], 0) < 0 )
+          exit(1);
       }
-      for (int j = 0; j < _numberOfSimpleCommands; j++) {
-        if (j != i - 1)
-          close(fdpipes[j][1]);
-        if (j != i)
-          close(fdpipes[j][0]);
-      }
+      // if not last command
+      // Output
+      if (i != _numberOfSimpleCommands - 1) {
+        if(dup2(fdpipes[i][1], 1) < 0 )
+          exit(1);
+      }     
       execvp(cmd->_arguments[0], cmd->_arguments);
-    } else {
+    } 
+    else {
       if (_background == 0) {
+        for (int j = 0; j < _numberOfSimpleCommands; j++) {
+        close(fdpipes[j][0]);
+        close(fdpipes[j][1]);
+        }
         waitpid(pid, 0, 0);
       }
     }
   }
-
   for (int i = 0; i < _numberOfSimpleCommands; i++) {
     close(fdpipes[i][0]);
     close(fdpipes[i][1]);
