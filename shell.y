@@ -99,20 +99,20 @@ iomodifier_opt:
         Command::_currentCommand._append= 1;
     }
     | GREATAMPERCAND WORD {
-            if( Command::_currentCommand._outFile) {
+            if( Command::_currentCommand._outFile || Command::_currentCommand._errFile) {
                 printf("Already set to another location GREATAMPERCAND shell.y");
                 exit(0);
             }
             Command::_currentCommand._outFile = $2;
-            Command::_currentCommand._background = 1;
+            Command::_currentCommand._errFile = $2;
     }        
     | GGREATAMPERCAND WORD {
-            if( Command::_currentCommand._outFile) {
+            if( Command::_currentCommand._outFile || Command::_currentCommand._errFile) {
                 printf("Already set to another location GGREATAMPERCAND shell.y");
                 exit(0);
             }
             Command::_currentCommand._outFile = $2;
-            Command::_currentCommand._background = 1;
+            Command::_currentCommand._errFile = $2;
             Command::_currentCommand._append = 1;
     }
     | LESS WORD {
