@@ -112,8 +112,7 @@ iomodifier_opt:
                 exit(0);
             }
             Command::_currentCommand._outFile = $2;
-            Command::_currentCommand._errFile= $2;
-            /* Command::_currentCommand._background = 1; */
+            Command::_currentCommand._background = 1;
             Command::_currentCommand._append = 1;
     }
     | LESS WORD {
