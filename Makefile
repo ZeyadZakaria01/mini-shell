@@ -10,7 +10,9 @@ lex.yy.o: shell.l
 	$(cc) -c lex.yy.c
 
 y.tab.o: shell.y
-	yacc -d shell.y
+	@yacc -d shell.y 2> err
+	@echo yacc -d shell.y
+	@rm err
 	$(CC) -c y.tab.c
 
 command.o: command.cc
