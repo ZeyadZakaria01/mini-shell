@@ -26,7 +26,17 @@
 using namespace std;
 
 string absolute = ".";
+string logf_name = "shell.log";
 char cwd[512];
+
+void sigchild_handler(int id) {
+  char buffer[] = "Child Finished\n";
+  FILE *fp;
+  fp = fopen(logf_name.c_str(), "a");
+  int retVal = fwrite(buffer, sizeof(buffer), 1, fp);
+  fclose(fp);
+  wait(NULL);
+}
 
 SimpleCommand::SimpleCommand() {
   // Create available space for 5 arguments
@@ -240,10 +250,13 @@ void Command::execute() {
       close(defaultout);
       close(defaulterr);
       int errflg = execvp(cmd->_arguments[0], cmd->_arguments);
-      if(errflg == -1){
-          cout<<"Command not found\n";
-          exit(-5);
+      if (errflg == -1) {
+        cout << "Command not found\n";
+        exit(-5);
       }
+    } else {
+
+      signal(SIGCHLD, sigchild_handler);
     }
     dup2(fdpipes[0], 0);
     close(fdpipes[0]);
