@@ -51,12 +51,16 @@
 .	{
     return NOTOKEN;
 }
-
-
-[^ \t\n][^ \t\n]*  {
+[^ \t\n\>\|\&\][^ \t\n]+ {
+/* [^ \t\n|][^ \t\n]*  { */
     /* Assume that file names have only alpha chars */
     yylval.string_val = strdup(yytext);
     return WORD;
 }
-%%
 
+%%
+/* [a-zA-Z0-9+.+]+  { */
+/*     /1* Assume that file names have only alpha chars *1/ */
+/*     yylval.string_val = strdup(yytext); */
+/*     return WORD; */
+/* } */
