@@ -26,6 +26,7 @@
 using namespace std;
 
 string absolute = ".";
+char cwd[512];
 
 SimpleCommand::SimpleCommand() {
   // Create available space for 5 arguments
@@ -101,8 +102,6 @@ void Command::clear() {
   _numberOfSimpleCommands = 0;
   _outFile = 0;
   _inputFile = 0;
-  _errFile = 0;
-  _background = 0;
 }
 
 void Command::print() {
@@ -134,39 +133,41 @@ void Command::execute() {
     prompt();
     return;
   }
-  char cwd[1000];
   if (chdir(absolute.c_str()) != 0) {
     printf("error in chdir");
   } else {
     if (getcwd(cwd, sizeof(cwd)) == NULL) {
       printf("error in getting cwd");
     } else {
-      cout << "Current Directory is " << cwd << endl;
+      /* cout << "Current Directory is " << cwd << endl; */
     }
   }
-  // TODO: exit sometimes bugs (when cd)
   // Print contents of Command data structure
   if (!strcmp(_simpleCommands[0]->_arguments[0], "exit")) {
     printf("\t\tGood bye!\n");
-    clear();
+    /* clear(); */
+    exit(5);
+    return;
     // needs to be 1 as we need to indicate
     // to indicate that the process didnt end in a peacful way
-    exit(1);
   }
   if (!strcmp(_simpleCommands[0]->_arguments[0], "cd")) {
     absolute = _simpleCommands[0]->_arguments[1];
 
-    cout << "Changed directory to " << absolute << endl;
+    /* cout << "Changed directory to " << absolute << endl; */
     if (chdir(absolute.c_str()) != 0) {
       printf("error in chdir");
     } else {
       if (getcwd(cwd, sizeof(cwd)) == NULL) {
-        printf("error in getting cwd");
+        printf("Error in getting cwd\n");
       } else {
-        cout << "Current Directory is " << cwd << endl;
+        /* cout << "Current Directory is " << cwd << endl; */
         absolute = cwd;
       }
     }
+    clear();
+    prompt();
+    return;
   }
 
   pid_t pid;
@@ -274,20 +275,10 @@ Command Command::_currentCommand;
 SimpleCommand *Command::_currentSimpleCommand;
 
 void Command::prompt() {
-  char cwd[1000];
-  if (getcwd(cwd, sizeof(cwd)) == NULL) {
-    printf("error in getting cwd");
-  } else {
-    cout << "Current Directory is " << cwd << endl;
-    absolute = cwd;
-  }
-  /* printf("myshell> "); */
-  cout <<"[" << cwd << "]$ ";
+  cout << "[" << cwd << "]$ ";
   fflush(stdout);
 }
 void sigintHandler(int sig_num) {
-  /* Reset handler to catch SIGINT next time.
-  Refer http://en.cppreference.com/w/c/program/signal */
   printf("\n");
   Command::_currentCommand.prompt();
   signal(SIGINT, sigintHandler);
@@ -297,6 +288,12 @@ void sigintHandler(int sig_num) {
 int yyparse(void);
 
 int main() {
+  if (getcwd(cwd, sizeof(cwd)) == NULL) {
+    printf("error in getting cwd");
+    return 1;
+  } else {
+    absolute = cwd;
+  }
   Command::_currentCommand.prompt();
   signal(SIGINT, sigintHandler);
   yyparse();
