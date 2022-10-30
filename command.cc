@@ -151,8 +151,12 @@ void Command::execute() {
     // needs to be 1 as we need to indicate
     // to indicate that the process didnt end in a peacful way
   }
+
   if (!strcmp(_simpleCommands[0]->_arguments[0], "cd")) {
-    absolute = _simpleCommands[0]->_arguments[1];
+    if (_simpleCommands[0]->_numberOfArguments > 1)
+      absolute = _simpleCommands[0]->_arguments[1];
+    else
+      absolute = (getenv("HOME"));
 
     /* cout << "Changed directory to " << absolute << endl; */
     if (chdir(absolute.c_str()) != 0) {
@@ -235,7 +239,11 @@ void Command::execute() {
       close(defaultin);
       close(defaultout);
       close(defaulterr);
-      execvp(cmd->_arguments[0], cmd->_arguments);
+      int errflg = execvp(cmd->_arguments[0], cmd->_arguments);
+      if(errflg == -1){
+          cout<<"Command not found\n";
+          exit(-5);
+      }
     }
     dup2(fdpipes[0], 0);
     close(fdpipes[0]);
