@@ -13,6 +13,7 @@
 #include <cstddef>
 #include <cstdlib>
 #include <fcntl.h>
+#include <glob.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,12 +31,17 @@ string logf_name = "shell.log";
 char cwd[512];
 
 void sigchild_handler(int id) {
-  char buffer[] = "Child Finished\n";
+  char buffer[100] = "";
+  time_t now = time(0);
+  char *dateTime = ctime(&now);
+  const char msg[] = "Child Terminated ";
+  strcpy(buffer, msg);
+  strcat(buffer, dateTime);
   FILE *fp;
   fp = fopen(logf_name.c_str(), "a");
   int retVal = fwrite(buffer, sizeof(buffer), 1, fp);
+  wait(nullptr);
   fclose(fp);
-  wait(NULL);
 }
 
 SimpleCommand::SimpleCommand() {
@@ -105,10 +111,6 @@ void Command::clear() {
     free(_inputFile);
   }
 
-  /* if (_errFile) { */
-  /*   free(_errFile); */
-  /* } */
-
   _numberOfSimpleCommands = 0;
   _outFile = 0;
   _inputFile = 0;
@@ -137,12 +139,40 @@ void Command::print() {
   printf("\n\n");
 }
 
+vector<string> glob(const string &pattern) {
+
+  // glob struct resides on the stack
+  glob_t glob_result;
+  memset(&glob_result, 0, sizeof(glob_result));
+
+  // do the glob operation
+  int return_value = glob(pattern.c_str(), GLOB_TILDE, NULL, &glob_result);
+  if (return_value != 0) {
+    globfree(&glob_result);
+    return {pattern};
+  }
+
+  // collect all the filenames into a std::list<std::string>
+  vector<string> filenames;
+  for (size_t i = 0; i < glob_result.gl_pathc; ++i) {
+    filenames.push_back(string(glob_result.gl_pathv[i]));
+  }
+
+  // cleanup
+  globfree(&glob_result);
+
+  // done
+  return filenames;
+}
+
 void Command::execute() {
   // Don't do anything if there are no simple commands
   if (_numberOfSimpleCommands == 0) {
     prompt();
     return;
   }
+  print();
+
   if (chdir(absolute.c_str()) != 0) {
     printf("error in chdir");
   } else {
@@ -168,14 +198,12 @@ void Command::execute() {
     else
       absolute = (getenv("HOME"));
 
-    /* cout << "Changed directory to " << absolute << endl; */
     if (chdir(absolute.c_str()) != 0) {
       printf("error in chdir");
     } else {
       if (getcwd(cwd, sizeof(cwd)) == NULL) {
         printf("Error in getting cwd\n");
       } else {
-        /* cout << "Current Directory is " << cwd << endl; */
         absolute = cwd;
       }
     }
@@ -196,6 +224,7 @@ void Command::execute() {
   // handling _inputFile
   if (_inputFile) {
     fdin = open(_inputFile, 0);
+    dup2(fdin, 0);
     if (fdin < 0) {
       printf("Could not create file");
       exit(1);
@@ -207,7 +236,31 @@ void Command::execute() {
 
   for (int i = 0; i < _numberOfSimpleCommands; i++) {
     SimpleCommand *cmd = _simpleCommands[i];
+    if (!strcmp(cmd->_arguments[0], "echo")) {
+      vector<string> vec = glob(cmd->_arguments[1]);
 
+      free(cmd->_arguments[1]);
+      ostringstream vts;
+      if (!vec.empty()) {
+        // Convert all but the last element to avoid a trailing ","
+        std::copy(vec.begin(), vec.end() - 1,
+                  std::ostream_iterator<string>(vts, " "));
+
+        // Now add the last element with no delimiter
+        vts << vec.back();
+      }
+
+      string s = vts.str();
+      char *c = (char *)malloc(s.length() * sizeof(char));
+      strcpy(c, s.c_str());
+      cmd->_arguments[1] = c;
+    }
+    if (!strcmp(cmd->_arguments[0], "ls")) {
+      string s = "--color=auto";
+      char *c = (char *)malloc(s.length() * sizeof(char));
+      strcpy(c, s.c_str());
+      /* continue; */
+    }
     pipe(fdpipes);
     if (i != _numberOfSimpleCommands - 1) {
       dup2(fdpipes[1], 1);
@@ -282,7 +335,6 @@ void Command::execute() {
   if (_background == 0) {
     waitpid(pid, &status, 0);
   }
-
   // Clear to prepare for next command
   clear();
 
