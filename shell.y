@@ -27,6 +27,7 @@ extern "C"
 }
 #define yylex yylex
 #include <stdio.h>
+#include <cstring>
 #include "command.h"
 %}
 

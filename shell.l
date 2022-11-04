@@ -52,6 +52,9 @@
 ">>&"    {
     return GGREATAMPERCAND ;
 }
+"&>>"    {
+    return GGREATAMPERCAND ;
+}
 
 [^ \t\n\>\|\&\][^ \t\n]+ {
 /* [^ \t\n|][^ \t\n]*  { */

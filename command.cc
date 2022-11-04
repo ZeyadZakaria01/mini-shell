@@ -30,7 +30,8 @@ string absolute = ".";
 string logf_name = "shell.log";
 char cwd[512];
 
-void sigchild_handler(int id) {
+void sigchild_handler(int id)
+{
   char buffer[100] = "";
   time_t now = time(0);
   char *dateTime = ctime(&now);
@@ -44,15 +45,18 @@ void sigchild_handler(int id) {
   fclose(fp);
 }
 
-SimpleCommand::SimpleCommand() {
+SimpleCommand::SimpleCommand()
+{
   // Create available space for 5 arguments
   _numberOfAvailableArguments = 5;
   _numberOfArguments = 0;
   _arguments = (char **)malloc(_numberOfAvailableArguments * sizeof(char *));
 }
 
-void SimpleCommand::insertArgument(char *argument) {
-  if (_numberOfAvailableArguments == _numberOfArguments + 1) {
+void SimpleCommand::insertArgument(char *argument)
+{
+  if (_numberOfAvailableArguments == _numberOfArguments + 1)
+  {
     // Double the available space
     _numberOfAvailableArguments *= 2;
     _arguments = (char **)realloc(_arguments,
@@ -67,7 +71,8 @@ void SimpleCommand::insertArgument(char *argument) {
   _numberOfArguments++;
 }
 
-Command::Command() {
+Command::Command()
+{
   // Create available space for one simple command
   _numberOfAvailableSimpleCommands = 1;
   _simpleCommands = (SimpleCommand **)malloc(_numberOfSimpleCommands *
@@ -81,8 +86,10 @@ Command::Command() {
   _append = 0;
 }
 
-void Command::insertSimpleCommand(SimpleCommand *simpleCommand) {
-  if (_numberOfAvailableSimpleCommands == _numberOfSimpleCommands) {
+void Command::insertSimpleCommand(SimpleCommand *simpleCommand)
+{
+  if (_numberOfAvailableSimpleCommands == _numberOfSimpleCommands)
+  {
     _numberOfAvailableSimpleCommands *= 2;
     _simpleCommands = (SimpleCommand **)realloc(
         _simpleCommands,
@@ -93,9 +100,12 @@ void Command::insertSimpleCommand(SimpleCommand *simpleCommand) {
   _numberOfSimpleCommands++;
 }
 
-void Command::clear() {
-  for (int i = 0; i < _numberOfSimpleCommands; i++) {
-    for (int j = 0; j < _simpleCommands[i]->_numberOfArguments; j++) {
+void Command::clear()
+{
+  for (int i = 0; i < _numberOfSimpleCommands; i++)
+  {
+    for (int j = 0; j < _simpleCommands[i]->_numberOfArguments; j++)
+    {
       free(_simpleCommands[i]->_arguments[j]);
     }
 
@@ -103,29 +113,34 @@ void Command::clear() {
     free(_simpleCommands[i]);
   }
 
-  if (_outFile) {
+  if (_outFile)
+  {
     free(_outFile);
   }
 
-  if (_inputFile) {
+  if (_inputFile)
+  {
     free(_inputFile);
   }
-
   _numberOfSimpleCommands = 0;
   _outFile = 0;
   _inputFile = 0;
+  _errFile = 0;
 }
 
-void Command::print() {
+void Command::print()
+{
   printf("\n\n");
   printf("              COMMAND TABLE                \n");
   printf("\n");
   printf("  #   Simple Commands\n");
   printf("  --- ----------------------------------------------------------\n");
 
-  for (int i = 0; i < _numberOfSimpleCommands; i++) {
+  for (int i = 0; i < _numberOfSimpleCommands; i++)
+  {
     printf("  %-3d ", i);
-    for (int j = 0; j < _simpleCommands[i]->_numberOfArguments; j++) {
+    for (int j = 0; j < _simpleCommands[i]->_numberOfArguments; j++)
+    {
       printf("\"%s\" \t", _simpleCommands[i]->_arguments[j]);
     }
   }
@@ -139,22 +154,24 @@ void Command::print() {
   printf("\n\n");
 }
 
-vector<string> glob(const string &pattern) {
-
+vector<string> glob(const string &pattern)
+{
   // glob struct resides on the stack
   glob_t glob_result;
   memset(&glob_result, 0, sizeof(glob_result));
 
   // do the glob operation
   int return_value = glob(pattern.c_str(), GLOB_TILDE, NULL, &glob_result);
-  if (return_value != 0) {
+  if (return_value != 0)
+  {
     globfree(&glob_result);
     return {pattern};
   }
 
   // collect all the filenames into a std::list<std::string>
   vector<string> filenames;
-  for (size_t i = 0; i < glob_result.gl_pathc; ++i) {
+  for (size_t i = 0; i < glob_result.gl_pathc; ++i)
+  {
     filenames.push_back(string(glob_result.gl_pathv[i]));
   }
 
@@ -165,25 +182,34 @@ vector<string> glob(const string &pattern) {
   return filenames;
 }
 
-void Command::execute() {
+void Command::execute()
+{
   // Don't do anything if there are no simple commands
-  if (_numberOfSimpleCommands == 0) {
+  if (_numberOfSimpleCommands == 0)
+  {
     prompt();
     return;
   }
   print();
 
-  if (chdir(absolute.c_str()) != 0) {
+  if (chdir(absolute.c_str()) != 0)
+  {
     printf("error in chdir");
-  } else {
-    if (getcwd(cwd, sizeof(cwd)) == NULL) {
+  }
+  else
+  {
+    if (getcwd(cwd, sizeof(cwd)) == NULL)
+    {
       printf("error in getting cwd");
-    } else {
+    }
+    else
+    {
       /* cout << "Current Directory is " << cwd << endl; */
     }
   }
   // Print contents of Command data structure
-  if (!strcmp(_simpleCommands[0]->_arguments[0], "exit")) {
+  if (!strcmp(_simpleCommands[0]->_arguments[0], "exit"))
+  {
     printf("\t\tGood bye!\n");
     /* clear(); */
     exit(5);
@@ -192,18 +218,25 @@ void Command::execute() {
     // to indicate that the process didnt end in a peacful way
   }
 
-  if (!strcmp(_simpleCommands[0]->_arguments[0], "cd")) {
+  if (!strcmp(_simpleCommands[0]->_arguments[0], "cd"))
+  {
     if (_simpleCommands[0]->_numberOfArguments > 1)
       absolute = _simpleCommands[0]->_arguments[1];
     else
       absolute = (getenv("HOME"));
 
-    if (chdir(absolute.c_str()) != 0) {
-      printf("error in chdir");
-    } else {
-      if (getcwd(cwd, sizeof(cwd)) == NULL) {
+    if (chdir(absolute.c_str()) != 0)
+    {
+      printf("error in chdir\n");
+    }
+    else
+    {
+      if (getcwd(cwd, sizeof(cwd)) == NULL)
+      {
         printf("Error in getting cwd\n");
-      } else {
+      }
+      else
+      {
         absolute = cwd;
       }
     }
@@ -222,10 +255,12 @@ void Command::execute() {
   int fdin, outfd;
 
   // handling _inputFile
-  if (_inputFile) {
+  if (_inputFile)
+  {
     fdin = open(_inputFile, 0);
     dup2(fdin, 0);
-    if (fdin < 0) {
+    if (fdin < 0)
+    {
       printf("Could not create file");
       exit(1);
     }
@@ -234,48 +269,63 @@ void Command::execute() {
   // declaring our pipe
   int fdpipes[2];
 
-  for (int i = 0; i < _numberOfSimpleCommands; i++) {
+  for (int i = 0; i < _numberOfSimpleCommands; i++)
+  {
     SimpleCommand *cmd = _simpleCommands[i];
-    if (!strcmp(cmd->_arguments[0], "echo")) {
-      vector<string> vec = glob(cmd->_arguments[1]);
+    if (!strcmp(cmd->_arguments[0], "echo"))
+    {
+      for (int j = 1; j < cmd->_numberOfArguments; j++)
+      {
+        vector<string> vec = glob(cmd->_arguments[j]);
 
-      free(cmd->_arguments[1]);
-      ostringstream vts;
-      if (!vec.empty()) {
-        // Convert all but the last element to avoid a trailing ","
-        std::copy(vec.begin(), vec.end() - 1,
-                  std::ostream_iterator<string>(vts, " "));
+        free(cmd->_arguments[j]);
+        ostringstream vts;
+        if (!vec.empty())
+        {
+          // Convert all but the last element to avoid a trailing ","
+          std::copy(vec.begin(), vec.end() - 1,
+                    std::ostream_iterator<string>(vts, " "));
 
-        // Now add the last element with no delimiter
-        vts << vec.back();
+          // Now add the last element with no delimiter
+          vts << vec.back();
+        }
+
+        string s = vts.str();
+        char *c = (char *)malloc(s.length() * sizeof(char));
+        strcpy(c, s.c_str());
+        cmd->_arguments[j] = c;
       }
-
-      string s = vts.str();
-      char *c = (char *)malloc(s.length() * sizeof(char));
-      strcpy(c, s.c_str());
-      cmd->_arguments[1] = c;
     }
-    if (!strcmp(cmd->_arguments[0], "ls")) {
+    if (!strcmp(cmd->_arguments[0], "ls"))
+    {
       string s = "--color=auto";
       char *c = (char *)malloc(s.length() * sizeof(char));
       strcpy(c, s.c_str());
       /* continue; */
     }
     pipe(fdpipes);
-    if (i != _numberOfSimpleCommands - 1) {
+    if (i != _numberOfSimpleCommands - 1)
+    {
       dup2(fdpipes[1], 1);
-    } else {
-      if (_outFile) {
+    }
+    else
+    {
+      if (_outFile)
+      {
 
         // outfd = creat(_outFile, 0600);
-        if (_append) {
+        if (_append)
+        {
           outfd = open(_outFile, O_APPEND | O_RDWR, 0777);
 
           /* failure */
-          if (outfd < 1) {
+          if (outfd < 1)
+          {
             outfd = open(_outFile, O_CREAT | O_RDWR, 0777);
           }
-        } else {
+        }
+        else
+        {
           outfd = creat(_outFile, 0777);
         }
         // makes outfd file descriptor = 1
@@ -286,28 +336,34 @@ void Command::execute() {
         close(outfd);
       }
       // default output if no _outFile
-      else {
+      else
+      {
         dup2(defaultout, 1);
       }
     }
     close(fdpipes[1]);
     pid = fork();
-    if (pid == -1) {
+    if (pid == -1)
+    {
       printf("could not fork");
       exit(EXIT_FAILURE);
     }
     // child
-    if (pid == 0) {
+    if (pid == 0)
+    {
       close(fdpipes[0]);
       close(defaultin);
       close(defaultout);
       close(defaulterr);
       int errflg = execvp(cmd->_arguments[0], cmd->_arguments);
-      if (errflg == -1) {
+      if (errflg == -1)
+      {
         cout << "Command not found\n";
         exit(-5);
       }
-    } else {
+    }
+    else
+    {
 
       signal(SIGCHLD, sigchild_handler);
     }
@@ -318,13 +374,15 @@ void Command::execute() {
   // restoring to default input/output/error
   dup2(defaultin, 0);
   close(defaultin);
-  if (_inputFile != 0) {
+  if (_inputFile != 0)
+  {
     close(fdin);
   }
 
   dup2(defaultout, 1);
   close(defaultout);
-  if (_outFile) {
+  if (_outFile)
+  {
     close(outfd);
   }
 
@@ -332,7 +390,8 @@ void Command::execute() {
   close(defaulterr);
 
   // handling parent wait
-  if (_background == 0) {
+  if (_background == 0)
+  {
     waitpid(pid, &status, 0);
   }
   // Clear to prepare for next command
@@ -347,11 +406,13 @@ void Command::execute() {
 Command Command::_currentCommand;
 SimpleCommand *Command::_currentSimpleCommand;
 
-void Command::prompt() {
+void Command::prompt()
+{
   cout << "[" << cwd << "]$ ";
   fflush(stdout);
 }
-void sigintHandler(int sig_num) {
+void sigintHandler(int sig_num)
+{
   printf("\n");
   Command::_currentCommand.prompt();
   signal(SIGINT, sigintHandler);
@@ -360,11 +421,15 @@ void sigintHandler(int sig_num) {
 
 int yyparse(void);
 
-int main() {
-  if (getcwd(cwd, sizeof(cwd)) == NULL) {
+int main()
+{
+  if (getcwd(cwd, sizeof(cwd)) == NULL)
+  {
     printf("error in getting cwd");
     return 1;
-  } else {
+  }
+  else
+  {
     absolute = cwd;
   }
   Command::_currentCommand.prompt();
