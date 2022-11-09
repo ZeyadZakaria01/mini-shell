@@ -60,7 +60,6 @@
 /* [^ \t\n|][^ \t\n]*  { */
     /* Assume that file names have only alpha chars */
     yylval.string_val = strdup(yytext);
-    printf("%s here \n", yylval.string_val);
     return WORD;
 }
 
